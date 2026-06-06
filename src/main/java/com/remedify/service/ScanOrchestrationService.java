@@ -5,6 +5,8 @@ import com.remedify.model.RepositoryScan;
 import com.remedify.model.ScanStage;
 import com.remedify.repository.RepositoryScanRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +20,7 @@ public class ScanOrchestrationService {
   private final RepositoryScanRepository repositoryScanRepository;
   private final RepositoryCloneService cloneService;
   private final VulnerabilityDetectionService detectionService;
-  private final AIRecommendationService aiService;
+  private final @Nullable AIRecommendationService aiService;
   private final BuildValidationService buildService;
   private final ReportGenerationService reportService;
 
@@ -26,7 +28,7 @@ public class ScanOrchestrationService {
       RepositoryScanRepository repositoryScanRepository,
       RepositoryCloneService cloneService,
       VulnerabilityDetectionService detectionService,
-      AIRecommendationService aiService,
+      @Nullable AIRecommendationService aiService,
       BuildValidationService buildService,
       ReportGenerationService reportService) {
     this.repositoryScanRepository = repositoryScanRepository;
@@ -46,7 +48,16 @@ public class ScanOrchestrationService {
 
       executeStage(scan, ScanStage.CLONING, cloneService::cloneScan);
       executeStage(scan, ScanStage.SCANNING, detectionService::detectVulnerabilities);
-      executeStage(scan, ScanStage.RECOMMENDING, aiService::generateRecommendations);
+
+      if (aiService != null) {
+        executeStage(scan, ScanStage.RECOMMENDING, aiService::generateRecommendations);
+      } else {
+        log.warn("Claude API not configured (ANTHROPIC_API_KEY not set). Skipping AI recommendations for scan: {}", scan.getId());
+        scan.setCurrentStage(ScanStage.RECOMMENDING);
+        scan.setStatusMessage("AI recommendations skipped (Claude API not configured)");
+        repositoryScanRepository.save(scan);
+      }
+
       executeStage(scan, ScanStage.VALIDATING, buildService::validateBuild);
       executeStage(scan, ScanStage.REPORTING, reportService::generateReport);
 

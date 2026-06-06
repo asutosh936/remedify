@@ -58,6 +58,14 @@ public class AIRecommendationService {
       return;
     }
 
+    // Validate Claude API is configured when high-severity vulns are found
+    if (claudeAIIntegration == null) {
+      log.warn("Claude API not configured (ANTHROPIC_API_KEY not set). Cannot generate AI recommendations for high-severity vulnerabilities.");
+      scan.setStatusMessage("High-severity vulnerabilities found, but Claude API is not configured. Set ANTHROPIC_API_KEY to enable recommendations.");
+      scanRepository.save(scan);
+      return;
+    }
+
     try {
       // Step 2: Group vulnerabilities by type for batch processing
       // This reduces API calls and improves token efficiency
