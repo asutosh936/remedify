@@ -4,15 +4,48 @@
 
 @layer components {
   .btn-primary {
-    @apply px-[14px] py-[8px] bg-primary text-white rounded-md font-button hover:bg-primary-hover focus:outline-2 focus:outline-offset-2 focus:outline-primary-focus transition-colors;
+    @apply px-[14px] py-[8px] bg-primary text-white rounded-md transition-colors;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .btn-primary:hover {
+    @apply bg-primary-hover;
+  }
+
+  .btn-primary:focus {
+    @apply outline-2 outline-offset-2 outline-primary-focus;
   }
 
   .btn-secondary {
-    @apply px-[14px] py-[8px] bg-surface-1 text-ink border border-hairline rounded-md font-button hover:bg-surface-2 focus:outline-2 focus:outline-offset-2 focus:outline-primary-focus transition-colors;
+    @apply px-[14px] py-[8px] bg-surface-1 text-ink border border-hairline rounded-md transition-colors;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-surface-2;
+  }
+
+  .btn-secondary:focus {
+    @apply outline-2 outline-offset-2 outline-primary-focus;
   }
 
   .btn-tertiary {
-    @apply px-[14px] py-[8px] bg-canvas text-ink rounded-md font-button hover:bg-surface-1 focus:outline-2 focus:outline-offset-2 focus:outline-primary-focus transition-colors;
+    @apply px-[14px] py-[8px] bg-canvas text-ink rounded-md transition-colors;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .btn-tertiary:hover {
+    @apply bg-surface-1;
+  }
+
+  .btn-tertiary:focus {
+    @apply outline-2 outline-offset-2 outline-primary-focus;
   }
 
   .card {
@@ -24,7 +57,13 @@
   }
 
   .input-base {
-    @apply px-[12px] py-[8px] bg-surface-1 border border-hairline text-ink rounded-md font-body focus:outline-2 focus:outline-offset-2 focus:outline-primary-focus transition-colors;
+    @apply px-[12px] py-[8px] bg-surface-1 border border-hairline text-ink rounded-md transition-colors;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .input-base:focus {
+    @apply outline-2 outline-offset-2 outline-primary-focus;
   }
 }
 
