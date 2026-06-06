@@ -245,6 +245,68 @@ tmux attach -t remedify
 
 ---
 
+## 📊 Logging Configuration
+
+### Log Levels
+
+The application uses SLF4J with detailed logging for debugging. Configure in `src/main/resources/application.yml`:
+
+```yaml
+logging:
+  level:
+    com.remedify: DEBUG                           # Application code
+    org.springframework.web: INFO                 # HTTP requests
+    org.hibernate.SQL: DEBUG                      # SQL queries
+    org.hibernate.type.descriptor.sql: TRACE      # SQL parameters
+```
+
+### View Logs
+
+**In Terminal (when running `mvn spring-boot:run`):**
+```
+2024-06-05 10:30:00.123 [main] INFO  c.remedify.RemedigyApplication - Started RemedigyApplication
+2024-06-05 10:30:01.456 [remedify-async-1] DEBUG c.r.service.ScanOrchestrationService - Starting stage: CLONING for scan: 550e8400
+2024-06-05 10:30:02.789 [remedify-async-1] DEBUG c.r.integration.GitHubIntegration - Cloning repository: https://github.com/spring-projects/spring-boot
+```
+
+**Log Levels (from most to least verbose):**
+- `TRACE` — Very detailed diagnostic info (SQL parameter values)
+- `DEBUG` — Detailed information for debugging
+- `INFO` — General informational messages
+- `WARN` — Warning messages (potential issues)
+- `ERROR` — Error messages (failures)
+- `FATAL` — Critical failures
+
+### Enable File Logging (Optional)
+
+Uncomment in `src/main/resources/application.yml`:
+
+```yaml
+logging:
+  file:
+    name: logs/remedify.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 1GB
+```
+
+Then logs will be written to `logs/remedify.log` with automatic rotation.
+
+### H2 Console (Database Inspection)
+
+During development, inspect the database at:
+
+```
+http://localhost:8080/h2-console
+```
+
+**Credentials:**
+- JDBC URL: `jdbc:h2:mem:remedifydb`
+- Username: `sa`
+- Password: (leave empty)
+
+---
+
 ## 🧪 Testing Setup
 
 ### Backend Tests
@@ -267,38 +329,368 @@ npm test
 
 ---
 
-## 📡 API Endpoints
+## 📡 API Endpoints & cURL Examples
 
-### Health & Status
+### Base URL
 ```
-GET  /api/scans              # List all scans (paginated)
-POST /api/scans              # Create new scan
-GET  /api/scans/{scanId}     # Get scan details
+http://localhost:8080/api
 ```
 
-### Reports
-```
-GET  /api/scans/{scanId}/report           # Get report (HTML/JSON)
-GET  /api/scans/{scanId}/report/download  # Download report
-```
+### 1. Create New Scan
+**Endpoint:** `POST /scans`
 
-### Real-time Updates
-```
-GET  /api/scans/{scanId}/sse  # Server-Sent Events stream
-```
+**Description:** Create a new scan for a GitHub repository (public repos only)
 
-### Examples
+**Request:**
 ```bash
-# Create a new scan
 curl -X POST http://localhost:8080/api/scans \
   -H "Content-Type: application/json" \
-  -d '{"gitHubUrl":"https://github.com/spring-projects/spring-boot"}'
+  -d '{
+    "gitHubUrl": "https://github.com/spring-projects/spring-boot"
+  }'
+```
 
-# List scans
+**Response:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "gitHubUrl": "https://github.com/spring-projects/spring-boot",
+  "repositoryName": "spring-boot",
+  "createdAt": "2024-06-05T10:30:00",
+  "updatedAt": "2024-06-05T10:30:00",
+  "currentStage": "CLONING",
+  "statusMessage": "Running Repository Clone",
+  "retryCount": 0,
+  "vulnerabilities": []
+}
+```
+
+---
+
+### 2. List All Scans (Paginated)
+**Endpoint:** `GET /scans?page=0&size=20`
+
+**Description:** Get paginated list of all scans (most recent first)
+
+**Request:**
+```bash
+# Get first page (default 20 items)
 curl http://localhost:8080/api/scans
 
-# Get scan details
-curl http://localhost:8080/api/scans/{scanId}
+# Get specific page
+curl "http://localhost:8080/api/scans?page=0&size=10"
+
+# With pagination
+curl "http://localhost:8080/api/scans?page=1&size=5"
+```
+
+**Response:**
+```json
+{
+  "content": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "gitHubUrl": "https://github.com/spring-projects/spring-boot",
+      "repositoryName": "spring-boot",
+      "currentStage": "COMPLETED",
+      "vulnerabilities": [
+        {
+          "id": "uuid-1",
+          "severity": "HIGH",
+          "type": "Dependency Vulnerability",
+          "description": "Log4j RCE Vulnerability"
+        }
+      ]
+    }
+  ],
+  "totalElements": 5,
+  "totalPages": 1,
+  "currentPage": 0,
+  "pageSize": 20
+}
+```
+
+---
+
+### 3. Get Scan Details
+**Endpoint:** `GET /scans/{scanId}`
+
+**Description:** Get detailed information about a specific scan including vulnerabilities and recommendations
+
+**Request:**
+```bash
+SCAN_ID="550e8400-e29b-41d4-a716-446655440000"
+
+curl http://localhost:8080/api/scans/$SCAN_ID
+```
+
+**Response:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "gitHubUrl": "https://github.com/spring-projects/spring-boot",
+  "repositoryName": "spring-boot",
+  "clonedPath": "/tmp/remedify-scans/550e8400",
+  "createdAt": "2024-06-05T10:30:00",
+  "updatedAt": "2024-06-05T10:45:30",
+  "currentStage": "COMPLETED",
+  "statusMessage": "Scan completed successfully",
+  "retryCount": 0,
+  "vulnerabilities": [
+    {
+      "id": "vuln-uuid-1",
+      "filePath": "pom.xml",
+      "severity": "HIGH",
+      "type": "Log4j RCE",
+      "description": "Apache Log4j2 versions < 2.17.1 are vulnerable to RCE",
+      "cveId": "CVE-2021-44228",
+      "source": "OWASP",
+      "aiRecommendation": {
+        "id": "rec-uuid-1",
+        "suggestion": "Update Log4j to version 2.17.1 or later",
+        "estimatedEffort": "Low",
+        "appliedManually": false
+      }
+    }
+  ],
+  "testResult": {
+    "buildSuccess": true,
+    "testsPassed": 245,
+    "testsFailed": 0
+  }
+}
+```
+
+---
+
+### 4. Get HTML Report
+**Endpoint:** `GET /scans/{scanId}/report` (Accept: text/html)
+
+**Description:** Get the scan report in HTML format
+
+**Request:**
+```bash
+SCAN_ID="550e8400-e29b-41d4-a716-446655440000"
+
+curl -H "Accept: text/html" \
+  http://localhost:8080/api/scans/$SCAN_ID/report > report.html
+
+# Open in browser
+open report.html
+```
+
+**Response:**
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Remedify Scan Report - spring-boot</title>
+    <!-- Linear Design System styling -->
+  </head>
+  <body>
+    <!-- Full HTML report with vulnerabilities, AI recommendations, test results -->
+  </body>
+</html>
+```
+
+---
+
+### 5. Get JSON Report
+**Endpoint:** `GET /scans/{scanId}/report` (Accept: application/json)
+
+**Description:** Get the scan report in JSON format (programmatic access)
+
+**Request:**
+```bash
+SCAN_ID="550e8400-e29b-41d4-a716-446655440000"
+
+curl -H "Accept: application/json" \
+  http://localhost:8080/api/scans/$SCAN_ID/report | jq .
+```
+
+**Response:**
+```json
+{
+  "scanId": "550e8400-e29b-41d4-a716-446655440000",
+  "repositoryName": "spring-boot",
+  "scanDate": "2024-06-05T10:45:30",
+  "summary": {
+    "totalVulnerabilities": 5,
+    "highSeverity": 2,
+    "medium": 2,
+    "low": 1,
+    "testsPassed": 245,
+    "testsFailed": 0,
+    "buildSuccess": true
+  },
+  "vulnerabilities": [
+    {
+      "severity": "HIGH",
+      "type": "Log4j RCE",
+      "location": "pom.xml",
+      "recommendation": "Update to version 2.17.1 or later"
+    }
+  ]
+}
+```
+
+---
+
+### 6. Download Report
+**Endpoint:** `GET /scans/{scanId}/report/download?format=html|json`
+
+**Description:** Download report file (returns as attachment)
+
+**Request:**
+```bash
+SCAN_ID="550e8400-e29b-41d4-a716-446655440000"
+
+# Download HTML report
+curl -O http://localhost:8080/api/scans/$SCAN_ID/report/download?format=html
+
+# Download JSON report
+curl -O http://localhost:8080/api/scans/$SCAN_ID/report/download?format=json
+
+# Save with custom filename
+curl http://localhost:8080/api/scans/$SCAN_ID/report/download?format=html \
+  -o my-scan-report.html
+```
+
+---
+
+### 7. Retry Failed Scan
+**Endpoint:** `POST /scans/{scanId}/retry`
+
+**Description:** Retry a scan that failed at any stage (max 2 auto-retries)
+
+**Request:**
+```bash
+SCAN_ID="550e8400-e29b-41d4-a716-446655440000"
+
+curl -X POST http://localhost:8080/api/scans/$SCAN_ID/retry \
+  -H "Content-Type: application/json"
+```
+
+**Response:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "gitHubUrl": "https://github.com/spring-projects/spring-boot",
+  "currentStage": "CLONING",
+  "statusMessage": "Retrying: Running Repository Clone",
+  "retryCount": 1
+}
+```
+
+---
+
+### 8. Delete Scan
+**Endpoint:** `DELETE /scans/{scanId}`
+
+**Description:** Delete a scan and clean up associated files (repos, temp files)
+
+**Request:**
+```bash
+SCAN_ID="550e8400-e29b-41d4-a716-446655440000"
+
+curl -X DELETE http://localhost:8080/api/scans/$SCAN_ID
+```
+
+**Response:** `204 No Content` (success)
+
+---
+
+### 9. Subscribe to Real-Time Updates (Server-Sent Events)
+**Endpoint:** `GET /scans/{scanId}/sse`
+
+**Description:** Real-time stream of scan progress updates (used by frontend)
+
+**Request:**
+```bash
+SCAN_ID="550e8400-e29b-41d4-a716-446655440000"
+
+# Using curl (will stream events)
+curl http://localhost:8080/api/scans/$SCAN_ID/sse
+
+# Using EventSource in JavaScript (see frontend/src/services/api.ts)
+const eventSource = new EventSource(`/api/scans/${scanId}/sse`)
+eventSource.onmessage = (event) => {
+  const update = JSON.parse(event.data)
+  console.log(`Stage: ${update.stage}, Message: ${update.message}`)
+}
+```
+
+**Event Stream:**
+```
+event: message
+data: {"stage":"CLONING","message":"Cloning repository..."}
+
+event: message
+data: {"stage":"SCANNING","message":"Running vulnerability detection..."}
+
+event: message
+data: {"stage":"RECOMMENDING","message":"Generating AI recommendations..."}
+
+event: message
+data: {"stage":"VALIDATING","message":"Running build and tests..."}
+
+event: message
+data: {"stage":"REPORTING","message":"Generating report..."}
+
+event: message
+data: {"stage":"COMPLETED","message":"Scan completed successfully"}
+```
+
+---
+
+### Quick Reference: Common Workflows
+
+**Create and monitor a scan:**
+```bash
+# 1. Create scan
+RESPONSE=$(curl -s -X POST http://localhost:8080/api/scans \
+  -H "Content-Type: application/json" \
+  -d '{"gitHubUrl":"https://github.com/spring-projects/spring-boot"}')
+
+SCAN_ID=$(echo $RESPONSE | jq -r '.id')
+echo "Created scan: $SCAN_ID"
+
+# 2. Check status (poll every 5 seconds)
+for i in {1..60}; do
+  STATUS=$(curl -s http://localhost:8080/api/scans/$SCAN_ID | jq -r '.currentStage')
+  echo "Status: $STATUS"
+  [ "$STATUS" = "COMPLETED" ] && break
+  sleep 5
+done
+
+# 3. Get report
+curl -H "Accept: application/json" \
+  http://localhost:8080/api/scans/$SCAN_ID/report | jq .
+
+# 4. Download report
+curl http://localhost:8080/api/scans/$SCAN_ID/report/download?format=html \
+  -o report.html
+```
+
+**Batch process multiple repositories:**
+```bash
+REPOS=(
+  "https://github.com/spring-projects/spring-boot"
+  "https://github.com/kubernetes/kubernetes"
+  "https://github.com/torvalds/linux"
+)
+
+for REPO in "${REPOS[@]}"; do
+  echo "Scanning: $REPO"
+  curl -s -X POST http://localhost:8080/api/scans \
+    -H "Content-Type: application/json" \
+    -d "{\"gitHubUrl\":\"$REPO\"}" | jq -r '.id'
+done
+```
+
+**Monitor all scans in progress:**
+```bash
+watch -n 5 'curl -s http://localhost:8080/api/scans | jq ".content[] | {name: .repositoryName, stage: .currentStage}"'
 ```
 
 ---

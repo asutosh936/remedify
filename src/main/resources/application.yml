@@ -31,14 +31,51 @@ server:
   servlet:
     context-path: /api
 
+# ==================== LOGGING CONFIGURATION ====================
 logging:
+  # Log level configuration
   level:
     root: INFO
-    com.remedify: DEBUG
-    org.springframework.web: INFO
-  pattern:
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
+    # Application logs
+    com.remedify: DEBUG
+    com.remedify.controller: DEBUG
+    com.remedify.service: DEBUG
+    com.remedify.integration: DEBUG
+    com.remedify.repository: DEBUG
+
+    # Spring Framework logs
+    org.springframework.web: INFO
+    org.springframework.web.servlet.mvc.method.annotation: DEBUG
+    org.springframework.security: INFO
+    org.springframework.data.jpa: INFO
+    org.springframework.orm.jpa: INFO
+
+    # Database/Hibernate logs
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+    # HTTP client logs
+    org.springframework.web.client: DEBUG
+
+  # Log pattern for console output
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+  # Log file configuration (optional - uncomment to enable)
+  # file:
+  #   name: logs/remedify.log
+  #   max-size: 10MB
+  #   max-history: 30
+  #   total-size-cap: 1GB
+  # logback:
+  #   rollingpolicy:
+  #     max-file-size: 10MB
+  #     max-history: 30
+  #     total-size-cap: 1GB
+
+# ==================== REMEDIFY CONFIGURATION ====================
 remedify:
   scanning:
     clone-timeout-seconds: 300
@@ -52,3 +89,9 @@ remedify:
   github:
     base-url: https://github.com
     api-url: https://api.github.com
+
+# ==================== APPLICATION INFO ====================
+app:
+  name: Remedify
+  description: Code Review Pipeline Automation with AI-Powered Vulnerability Fixes
+  version: 0.1.0

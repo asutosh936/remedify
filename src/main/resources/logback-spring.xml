@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+  <!-- Application-specific loggers -->
+  <logger name="com.remedify" level="DEBUG" />
+  <logger name="com.remedify.controller" level="DEBUG" />
+  <logger name="com.remedify.service" level="DEBUG" />
+  <logger name="com.remedify.integration" level="DEBUG" />
+
+  <!-- Spring Framework loggers -->
+  <logger name="org.springframework.web" level="INFO" />
+  <logger name="org.springframework.web.servlet.mvc.method.annotation" level="DEBUG" />
+  <logger name="org.springframework.security" level="INFO" />
+
+  <!-- Database loggers -->
+  <logger name="org.hibernate.SQL" level="DEBUG" />
+  <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />
+
+  <!-- Root logger -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE" />
+  </root>
+
+  <!-- Environment-specific profiles can be added here -->
+  <springProfile name="dev">
+    <logger name="com.remedify" level="DEBUG" />
+  </springProfile>
+
+  <springProfile name="prod">
+    <logger name="com.remedify" level="INFO" />
+  </springProfile>
+</configuration>

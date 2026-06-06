@@ -1,5 +1,30 @@
+################################
+# Node.js / npm / yarn
+################################
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+npm-shrinkwrap.json
+
+# Production build
+dist/
+dist-ssr/
+build/
+
+# Runtime cache
+.cache/
+.eslintcache
+
+################################
 # Logs
-logs
+################################
+
+# npm logs
+logs/
+logs/*
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,23 +32,156 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Custom logs
+*.log.*
+log.out
 
-# Editor directories and files
+################################
+# IDE & Editor
+################################
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
 
-# Environment
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+.sublime/
+
+# WebStorm
+.idea/
+*.iml
+
+# Vim
+*~
+.swp
+.swo
+*.swn
+.DS_Store
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+################################
+# OS Specific
+################################
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Windows
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+################################
+# Environment & Configuration
+################################
+
+# Environment variables
 .env
 .env.local
+.env.dev.local
+.env.test.local
+.env.production.local
+
+# Local config
 .env.*.local
+config.local.js
+
+# API keys and secrets
+secrets/
+.credentials
+.aws/
+ssh/
+keys/
+
+################################
+# Development & Testing
+################################
+
+# Coverage reports
+coverage/
+.coverage
+htmlcov/
+*.cover
+*.lcov
+.nyc_output/
+
+# Test results
+test-results/
+junit/
+
+# Development artifacts
+.next/
+.nuxt/
+out/
+
+# Temp files
+*.tmp
+temp/
+tmp/
+.tmp/
+
+################################
+# Build artifacts
+################################
+
+# Vite
+.vite/
+vite-cache/
+
+# Build output
+dist-old/
+build-old/
+
+# Rollup
+.rollup.cache/
+
+# Bundle analyzer
+stats.json
+stats.html
+
+################################
+# Node specific
+################################
+
+# Local .env
+.env.local
+
+# Local environment overrides
+.env.*.local
+
+# Lock files (optional - comment out if you want to commit)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Crash dumps
+dump-*.js
+
+# Cache
+.cache/
+.eslintcache
+.stylelintcache
