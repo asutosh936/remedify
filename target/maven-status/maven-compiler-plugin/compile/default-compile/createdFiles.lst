@@ -6,6 +6,7 @@ com/remedify/repository/RepositoryScanRepository.class
 com/remedify/model/TestResult.class
 com/remedify/model/RepositoryScan.class
 com/remedify/integration/GitHubIntegration.class
+com/remedify/integration/GitHubIntegration$ProjectMetadata.class
 com/remedify/repository/ScanReportRepository.class
 com/remedify/integration/OWASPIntegration.class
 com/remedify/repository/VulnerabilityRepository.class
